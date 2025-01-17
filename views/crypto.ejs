@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link type="text/css" href="<%= cssFile %>" rel="stylesheet">
+     <title>Document</title>
+</head>
+<body>
+   <% if (locals.alertStatus=="success") { %>
+     <div class="alert-div" id="alert-div">
+        <p>Your alert has been successfully set!!!</p>
+         <a href="/crypto/getPrices"><button id="close">CLOSE</button>
+     </div>
+    <% } %> 
+    <div id="alerts-div">
+        <button id="close-all">CLOSE ALL</button>
+    </div>
+    <nav id="nav">
+        <a href="/">home</a>
+        <a href="/crypto/getPrices">prices</a>
+    </nav>
+    <h1>CRYPTO PRICES</h1>
+    <div id="form">
+          <form action="/crypto/setAlert" method="post" >
+            <h5>SET ALERT</h5>
+            <div id="name-div">
+                <p>crypto name:</p>
+                <input type="text" name="crypto_symbol" id="crypto_name">
+            </div>
+          <div>
+              <select id="direction" name="direction">
+                   <option>below</option>
+                   <option>above</option>
+               </select>
+               <input type="number" step="0.01" name="target_price" id="price">
+          </div>
+          <div>
+              <button type="button" id="cancle" class="btns">CANCLE</button> 
+                <a href="/crypto/getPrices"><button class="btns" type="submit">SET</button></a>
+          </div>
+          </form>
+    </div>
+    <div id="main-div">
+        <div>
+            <h3>SI.NO</h3>
+            <h3>ICON</h3>
+            <h3>NAME</h3>
+            <h3>PRICE</h3>
+            <h3>ALERT</h3>
+        </div>
+        <div id="div"></div>
+    </div>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script>
+        const socket=io("http://localhost:5000");
+        socket.emit("clientEnteredPage");
+        socket.on("alert",(alert)=>{
+            const alerts_div=document.getElementById("alerts-div")
+            alerts_div.style.display="flex";
+            const child_div=document.createElement("div");
+            child_div.style.display="flex";
+            child_div.className="child-divs";
+            const h2=document.createElement("h2");
+            const p=document.createElement("p");
+            h2.innerText=`${alert.symbol}`;
+            p.innerText=`${alert.message}`;
+            child_div.append(h2);
+            child_div.append(p);
+            alerts_div.insertBefore(child_div,document.getElementById("close-all"));
+            document.getElementById("close-all").addEventListener("click",()=>{
+            document.getElementById("alerts-div").style.display="none";
+            });
+        })
+        socket.on("prices",(mergedData)=>{
+            const mainDiv=document.getElementById("div");
+            mainDiv.innerHTML="";
+            Array.from(mergedData).forEach(element => {
+            const div=document.createElement("div");
+            const si=document.createElement("p");
+            const h1=document.createElement("h1");
+            const img=document.createElement("img");
+            const p=document.createElement("p");
+            const alertBtn=document.createElement("button");
+            const form=document.getElementById("form");
+            si.innerText=`${element.index+1}`;
+            img.src=element.icon_url;
+            img.style.width="60px";
+            img.style.height="40px;"
+            h1.innerHTML=element.symbol;
+            p.innerText=element.price;
+            alertBtn.innerText="add alert";
+            alertBtn.id="alertBtn"
+            alertBtn.className="btns"
+            div.append(si);
+            div.append(img);
+            div.append(h1);
+            div.append(p);
+            div.append(alertBtn);
+            mainDiv.appendChild(div);
+            alertBtn.addEventListener("click",()=>{
+                const close=document.getElementById("cancle");
+                close.addEventListener("click",()=>{
+                    form.style.display="none";
+                    document.body.style.backgroundColor="white"
+                })
+                const crypto=document.getElementById("crypto_name");
+                const price=document.getElementById("price");
+                crypto.value=`${element.symbol}`;
+                price.value=`${element.price}`;
+                   if(form.style.display=="none"){
+                    form.style.display="flex";
+                    document.body.style.backgroundColor="rgba(18, 18, 18, 0.636)";
+                }
+                else{
+                    form.style.display="none";
+                    document.body.style.backgroundColor="white"
+                   }
+            })
+           });
+            
+        });
+        window.addEventListener("beforeunload",()=>{
+            io.emit("clientLeftPage");
+        })
+        document.getElementById("close").addEventListener("click",()=>{
+            document.getElementById("alert-div").style.display="none";
+        })
+       
+        </script>
+</body>
+</html>

@@ -1,6 +1,7 @@
 const { createHmac,randomBytes } = require("crypto");
 const {Schema,model}=require("mongoose");
 const ErrorGenerator = require("../utils/ErrorGenerator");
+const { generateToken } = require("../services/JWT");
 
 const userSchema=new Schema({
     username:{
@@ -29,7 +30,8 @@ userSchema.static("validateUser",async function(username,password,next){
     .update(password)
     .digest("hex");
     if(hashedPassword!=user.password) throw new Error("password is wrong");
-    return user;
+    const token=await generateToken(user);
+    return token;
 })
 
 userSchema.pre("save",async function(next){

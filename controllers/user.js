@@ -19,11 +19,9 @@ const  handleSignup=tryCatch(async (req,res,next)=>{
 
 const handleLogin=tryCatch(async (req,res,next)=>{
  const {username,password}=req.body;
- const user=await userModel.validateUser(username,password,next);
- return res.status(200).json({
-    status:"success",
-    message:"successfully loggedIn",
- })
+ const token=await userModel.validateUser(username,password,next);
+ res.cookie("token",token);
+ return res.redirect("/");
 })
 
 const handleForgotPassword=tryCatch(async (req,res,next)=>{
